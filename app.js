@@ -70,18 +70,13 @@ function worldToScreen(wcoord,camcoord) {
   return [canvas.width/2+(wcoord[0]-camcoord[0])*scale,canvas.height/2-(wcoord[1]-camcoord[1])*scale];
 }
 
-function drawArea(ctx, ob, x, y, w, h, highlighted) {
+function drawArea(ctx, ob, x, y, w, h) {
   var r = ob.color.r;
   var g = ob.color.g;
   var b = ob.color.b;
   ctx.lineWidth = 0;
   ctx.fillStyle = "rgb("+r+","+g+","+b+")";
   ctx.fillRect(x, y, w, h);
-  if(highlighted) {
-    ctx.strokeStyle = "rgb(255,255,255)";
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x+2, y+2, w-2, h-2);
-  }
 }
 
 function drawWorld(ctx) {
@@ -90,8 +85,7 @@ function drawWorld(ctx) {
     for (var y in got[x]) {
       var point = got[x][y];
       var scoord = worldToScreen([x,y],john.pos);
-      var selected = (selection&&selection[0]==x&&selection[1]==y)?true:false;
-      drawArea(ctx,point,scoord[0],scoord[1],scale,scale,selected);
+      drawArea(ctx,point,scoord[0],scoord[1],scale,scale);
     }
   }
 }
@@ -116,12 +110,22 @@ function drawFauna(ctx) {
   ctx.stroke();
 }
 
+function drawHud(ctx) {
+  if(selection){
+    var scoord = worldToScreen(selection,john.pos);
+    ctx.strokeStyle = "rgb(255,255,255)";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(scoord[0]+2, scoord[1]+2, scale-2, scale-2);
+  }
+}
+
 function draw() {
   var ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawWorld(ctx);
   drawFauna(ctx);
   drawDebug(ctx);
+  drawHud(ctx);
 }
 
 function resize() {
