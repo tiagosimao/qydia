@@ -4,45 +4,33 @@ var scale = 30;
 
 var drawdistance = 30;
 
-var worldpos = [0,0];
+var john = {
+  pos: [0,0]
+};
 
-var lastclick = [0,0];
+var selection;
 
 var stuff = new Map();
 
 var map;
 
-function getStuffNear(x,y,radius){
+function getStuffNear(wcoord,radius){
+  var x = wcoord[0];
+  var y = wcoord[1];
   var result = new Array();
   for(var i=-radius;i<radius;++i){
     for(var j=-radius;j<radius;++j){
-      if(map[x+i]&&map[x+i][y+j]){
+      var mx = x+i;
+      var my = y+j;
+      if(world.map[mx]&&world.map[mx][my]){
         if(!result[x+i]){
           result[x+i] = new Array();
         }
-        result[x+i][y+j]=map[x+i][y+j];
+        result[x+i][y+j]=world.map[x+i][y+j];
       }
     }
   }
   return result;
-}
-
-function placeObjectNear(ob,x,y){
-  if(!map[x]){
-    map[x] = new Array();
-  }
-  if(!map[x][y]){
-    map[x][y] = ob;
-    return ob;
-  } else {
-    var xspread = Math.random() < 0.3 ? - 1 : 1;
-    var yspread = Math.random() < 0.3 ? - 1 : 1;
-    xspread *= 1 + Math.floor(Math.random() * 6);
-    yspread *= 1 + Math.floor(Math.random() * 6);
-    x += xspread;
-    y += yspread;
-    return placeObjectNear(ob,x,y);
-  }
 }
 
 function generateObject(idi){
@@ -50,77 +38,89 @@ function generateObject(idi){
     id: idi,
   };
   obj.color= {
-    r:Math.abs(obj.id)%150,
-    g:Math.abs(2*(obj.id+85))%150,
-    b:Math.abs(3*(obj.id+170))%150
+    r:50+Math.abs(obj.id)%150,
+    g:0,//Math.abs(2*(obj.id+85))%150,
+    b:0,//Math.abs(3*(obj.id+170))%150
   }
   stuff.set(obj.id,obj);
   return obj;
 }
 
 function generate(w,h) {
-  map = new Array();
-  for(var i=-w/2;i<w/2;++i){
+  world = {
+    width:w,
+    height:h
+  };
+  var map = new Array();
+  for(var i=0;i<w;++i){
     map[i]=new Array();
-    for(var j=-h/2;j<h/2;++j){
+    for(var j=0;j<h;++j){
       map[i][j] = generateObject(i*w+j);
-
-      //placeObjectNear(got,0,0);
     }
   }
+  world.map=map;
 }
 
-function screenToWorld(coord) {
-  return [Math.floor((coord[0]-canvas.width/2)/scale+worldpos[0]),Math.ceil(worldpos[1]-(coord[1]-canvas.height/2)/scale)];
+function screenToWorld(scoord,camcoord) {
+  return [Math.floor((scoord[0]-canvas.width/2)/scale+camcoord[0]),Math.ceil(camcoord[1]-(scoord[1]-canvas.height/2)/scale)];
 }
 
 
-function worldToScreen(coord) {
-  return [canvas.width/2+(coord[0]-worldpos[0])*scale,canvas.height/2-(coord[1]-worldpos[1])*scale];
+function worldToScreen(wcoord,camcoord) {
+  return [canvas.width/2+(wcoord[0]-camcoord[0])*scale,canvas.height/2-(wcoord[1]-camcoord[1])*scale];
 }
 
-function drawArea(ctx, ob, x, y, w, h, selected) {
+function drawArea(ctx, ob, x, y, w, h, highlighted) {
   var r = ob.color.r;
   var g = ob.color.g;
   var b = ob.color.b;
-  if(selected){
-    r=255;
-    g=255;
-    b=255;
-  }
+  ctx.lineWidth = 0;
   ctx.fillStyle = "rgb("+r+","+g+","+b+")";
   ctx.fillRect(x, y, w, h);
+  if(highlighted) {
+    ctx.strokeStyle = "rgb(255,255,255)";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(x+2, y+2, w-2, h-2);
+  }
 }
 
 function drawWorld(ctx) {
-  var got = getStuffNear(worldpos[0],worldpos[1],drawdistance);
+  var got = getStuffNear(john.pos,drawdistance);
   for (var x in got) {
     for (var y in got[x]) {
       var point = got[x][y];
-      var wcoord = [x,y];
-      var scoord = worldToScreen(wcoord);
-      var selected = (lastclick[0]==x&&lastclick[1]==y)?true:false;
-      if(selected){
-        console.log(selected + wcoord);
-      }
+      var scoord = worldToScreen([x,y],john.pos);
+      var selected = (selection&&selection[0]==x&&selection[1]==y)?true:false;
       drawArea(ctx,point,scoord[0],scoord[1],scale,scale,selected);
     }
   }
 }
 
-function drawDebug(ctx){
+function drawDebug(ctx) {
   ctx.fillStyle = "rgb(150,150,150)";
   ctx.font = '25px';
   ctx.fillText("Scale: " + scale, 10, 20);
   ctx.fillText("Draw Distance: " + drawdistance , 10, 40);
-  ctx.fillText("World Position: " + worldpos , 10, 60);
-  ctx.fillText("Last Click: " + lastclick , 10, 80);
+  ctx.fillText("World Position: " + john.pos , 10, 60);
+  ctx.fillText("Selection: " + selection , 10, 80);
+}
+
+function drawFauna(ctx) {
+  var scoord = worldToScreen(john.pos,john.pos);
+  ctx.beginPath();
+  ctx.arc(scoord[0]+scale/2, scoord[1]+scale/2, scale/4, 0, 2 * Math.PI, false);
+  ctx.fillStyle = 'green';
+  ctx.fill();
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = '#003300';
+  ctx.stroke();
 }
 
 function draw() {
   var ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
   drawWorld(ctx);
+  drawFauna(ctx);
   drawDebug(ctx);
 }
 
@@ -148,28 +148,39 @@ function resize() {
 }());
 
 canvas.addEventListener('click', function(e) {
-  lastclick = screenToWorld([e.offsetX,e.offsetY]);
-  console.log([e.offsetX,e.offsetY]);
-
+  var lastclick = screenToWorld([e.offsetX,e.offsetY],john.pos);
+  if(selection&&selection[0]==lastclick[0]&&selection[1]==lastclick[1]){
+    selection=null;
+  } else {
+    selection=lastclick;
+  }
   draw();
     }, false);
+
+function moveX(wut,howmuch) {
+  wut.pos[0] = (world.width+wut.pos[0]+howmuch)%world.width;
+}
+
+function moveY(wut,howmuch) {
+  wut.pos[1] = (world.height+wut.pos[1]+howmuch)%world.height;
+}
 
 document.onkeydown = function(e) {
   switch (e.keyCode) {
     case 37:
-      worldpos[0]--;
+      moveX(john,-1);
       draw();
       break;
     case 38:
-      worldpos[1]++;
+      moveY(john,1);
       draw();
       break;
     case 39:
-      worldpos[0]++;
+      moveX(john,1);
       draw();
       break;
     case 40:
-      worldpos[1]--;
+      moveY(john,-1);
       draw();
       break;
     case 73:
@@ -191,7 +202,7 @@ document.onkeydown = function(e) {
     }
 };
 
-generate(100,100);
+generate(10,10);
 
 resize();
 draw();
