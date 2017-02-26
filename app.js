@@ -1,6 +1,6 @@
 var canvas = document.getElementById("canvas");
 
-var scale = 30;
+var scale = 50;
 
 var drawdistance = 30;
 
@@ -10,11 +10,9 @@ var john = {
 
 var selection;
 
-var stuff = new Map();
-
 var map;
 
-function getStuffNear(wcoord,radius){
+function getStuffNear(world,wcoord,radius){
   var x = wcoord[0];
   var y = wcoord[1];
   var result = new Array();
@@ -22,32 +20,29 @@ function getStuffNear(wcoord,radius){
     for(var j=-radius;j<radius;++j){
       var mx = ringCoord(world.width,x+i);
       var my = ringCoord(world.height,y+j);
-      //if(world.map[mx]&&world.map[mx][my]){
-        if(!result[x+i]){
-          result[x+i] = new Array();
-        }
-        result[x+i][y+j]=world.map[mx][my];
-      //}
+      if(!result[x+i]){
+        result[x+i] = new Array();
+      }
+      result[x+i][y+j]=world.map[mx][my];
     }
   }
   return result;
 }
 
-function generateObject(idi){
+function generateArea(idi){
   var obj = {
     id: idi,
   };
   obj.color= {
     r:50+Math.abs(obj.id)%150,
-    g:0,//Math.abs(2*(obj.id+85))%150,
-    b:0,//Math.abs(3*(obj.id+170))%150
+    g:0,
+    b:0,
   }
-  stuff.set(obj.id,obj);
   return obj;
 }
 
 function generate(w,h) {
-  world = {
+  var world = {
     width:w,
     height:h
   };
@@ -55,21 +50,15 @@ function generate(w,h) {
   for(var i=0;i<w;++i){
     map[i]=new Array();
     for(var j=0;j<h;++j){
-      map[i][j] = generateObject(i*w+j);
+      map[i][j] = generateArea(i*w+j);
     }
   }
   world.map=map;
+  return world;
 }
 
-//-14  -13  -12  -11  -10  -9   -8   -7   -6   -5   -4   -3   -2   -1   0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20  21
-//  6    7    8    9    0   1    2    3    4    5    6    7    8    9   0   1   2   3   4   5   6   7   8   9   0   1   2   3   4
-
 function ringCoord(max,value) {
-  if(value<0){
-    return (max-Math.abs(value%max))%max;
-  } else {
-    return (max+value)%max;
-  }
+  return (max+value%max)%max;
 }
 
 function moveX(wut,howmuch) {
@@ -83,11 +72,8 @@ function moveY(wut,howmuch) {
 function screenToWorld(scoord,camcoord) {
   var x = Math.floor((scoord[0]-canvas.width/2)/scale+camcoord[0]);
   var y = Math.ceil(camcoord[1]-(scoord[1]-canvas.height/2)/scale);
-  console.log(x+":"+y);
-
   x = ringCoord(world.width, x);
   y = ringCoord(world.height, y);
-  console.log(x+":"+y);
   return [x,y];
 }
 
@@ -105,7 +91,7 @@ function drawArea(ctx, ob, x, y, w, h) {
 }
 
 function drawWorld(ctx) {
-  var got = getStuffNear(john.pos,drawdistance);
+  var got = getStuffNear(world,john.pos,drawdistance);
   for (var x in got) {
     for (var y in got[x]) {
       var point = got[x][y];
@@ -223,7 +209,7 @@ document.onkeydown = function(e) {
     }
 };
 
-generate(10,10);
+world = generate(10,10);
 
 resize();
 draw();
