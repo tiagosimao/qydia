@@ -61,10 +61,21 @@ function generate(w,h) {
   world.map=map;
 }
 
-function screenToWorld(scoord,camcoord) {
-  return [Math.floor((scoord[0]-canvas.width/2)/scale+camcoord[0]),Math.ceil(camcoord[1]-(scoord[1]-canvas.height/2)/scale)];
+function moveX(wut,howmuch) {
+  wut.pos[0] = (world.width+wut.pos[0]+howmuch)%world.width;
 }
 
+function moveY(wut,howmuch) {
+  wut.pos[1] = (world.height+wut.pos[1]+howmuch)%world.height;
+}
+
+function screenToWorld(scoord,camcoord) {
+  var x = Math.floor((scoord[0]-canvas.width/2)/scale+camcoord[0]);
+  var y = Math.ceil(camcoord[1]-(scoord[1]-canvas.height/2)/scale);
+  x = (world.width + x) % world.width;
+  y = (world.height + y) % world.height;
+  return [x,y];
+}
 
 function worldToScreen(wcoord,camcoord) {
   return [canvas.width/2+(wcoord[0]-camcoord[0])*scale,canvas.height/2-(wcoord[1]-camcoord[1])*scale];
@@ -160,14 +171,6 @@ canvas.addEventListener('click', function(e) {
   }
   draw();
     }, false);
-
-function moveX(wut,howmuch) {
-  wut.pos[0] = (world.width+wut.pos[0]+howmuch)%world.width;
-}
-
-function moveY(wut,howmuch) {
-  wut.pos[1] = (world.height+wut.pos[1]+howmuch)%world.height;
-}
 
 document.onkeydown = function(e) {
   switch (e.keyCode) {
