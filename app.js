@@ -20,14 +20,14 @@ function getStuffNear(wcoord,radius){
   var result = new Array();
   for(var i=-radius;i<radius;++i){
     for(var j=-radius;j<radius;++j){
-      var mx = x+i;
-      var my = y+j;
-      if(world.map[mx]&&world.map[mx][my]){
+      var mx = ringCoord(world.width,x+i);
+      var my = ringCoord(world.height,y+j);
+      //if(world.map[mx]&&world.map[mx][my]){
         if(!result[x+i]){
           result[x+i] = new Array();
         }
-        result[x+i][y+j]=world.map[x+i][y+j];
-      }
+        result[x+i][y+j]=world.map[mx][my];
+      //}
     }
   }
   return result;
@@ -61,19 +61,33 @@ function generate(w,h) {
   world.map=map;
 }
 
+//-14  -13  -12  -11  -10  -9   -8   -7   -6   -5   -4   -3   -2   -1   0   1   2   3   4   5   6   7   8   9  10  11  12  13  14  15  16  17  18  19  20  21
+//  6    7    8    9    0   1    2    3    4    5    6    7    8    9   0   1   2   3   4   5   6   7   8   9   0   1   2   3   4
+
+function ringCoord(max,value) {
+  if(value<0){
+    return (max-Math.abs(value%max))%max;
+  } else {
+    return (max+value)%max;
+  }
+}
+
 function moveX(wut,howmuch) {
-  wut.pos[0] = (world.width+wut.pos[0]+howmuch)%world.width;
+  wut.pos[0] = ringCoord(world.width,wut.pos[0]+howmuch);
 }
 
 function moveY(wut,howmuch) {
-  wut.pos[1] = (world.height+wut.pos[1]+howmuch)%world.height;
+  wut.pos[1] = ringCoord(world.height,wut.pos[1]+howmuch);
 }
 
 function screenToWorld(scoord,camcoord) {
   var x = Math.floor((scoord[0]-canvas.width/2)/scale+camcoord[0]);
   var y = Math.ceil(camcoord[1]-(scoord[1]-canvas.height/2)/scale);
-  x = (world.width + x) % world.width;
-  y = (world.height + y) % world.height;
+  console.log(x+":"+y);
+
+  x = ringCoord(world.width, x);
+  y = ringCoord(world.height, y);
+  console.log(x+":"+y);
   return [x,y];
 }
 
