@@ -4,61 +4,39 @@ var scale = 50;
 
 var drawdistance = 30;
 
+var world;
+
 var john = {
   pos: [0,0]
 };
 
 var selection;
 
-var map;
-
-function getStuffNear(world,wcoord,radius){
-  var x = wcoord[0];
-  var y = wcoord[1];
-  var result = new Array();
-  for(var i=-radius;i<radius;++i){
-    for(var j=-radius;j<radius;++j){
-      var mx = ringCoord(world.width,x+i);
-      var my = ringCoord(world.height,y+j);
-      if(!result[x+i]){
-        result[x+i] = new Array();
-      }
-      result[x+i][y+j]=world.map[mx][my];
-    }
-  }
-  return result;
+function reloadWorld() {
+  fetch("/api/world")
+  .then(function(response) { return response.json(); })
+  .then(got=>{
+    world=got;
+    reloadWorldMap();
+  })
+  .catch(e=>console.log(e));
 }
 
-function generateArea(idi){
-  var obj = {
-    id: idi,
-  };
-  obj.color= {
-    r:50+Math.abs(obj.id)%150,
-    g:0,
-    b:0,
-  }
-  return obj;
+function reloadWorldMap() {
+  fetch("/api/world?x="+john.pos[0]+"&y="+john.pos[1]+"&radius="+drawdistance)
+  .then(r=>response.json())
+  .then(got=>{
+    world.map=got;
+    draw();
+  })
+  .catch(e=>console.log(e));
 }
 
-function generate(w,h) {
-  var world = {
-    width:w,
-    height:h
-  };
-  var map = new Array();
-  for(var i=0;i<w;++i){
-    map[i]=new Array();
-    for(var j=0;j<h;++j){
-      map[i][j] = generateArea(i*w+j);
-    }
-  }
-  world.map=map;
-  return world;
-}
-
-function ringCoord(max,value) {
-  return (max+value%max)%max;
+function getStuffNear(wcoord,radius,okConsumer,errorConsumer){
+  fetch("/api/world?x="+wcoord[0]+"&y="+wcoord[1]+"&radius="+radius)
+  .then(function(response) { return response.json(); })
+  .then(okConsumer)
+  .catch(errorConsumer);
 }
 
 function moveX(wut,howmuch) {
@@ -90,8 +68,7 @@ function drawArea(ctx, ob, x, y, w, h) {
   ctx.fillRect(x, y, w, h);
 }
 
-function drawWorld(ctx) {
-  var got = getStuffNear(world,john.pos,drawdistance);
+function drawWorld(ctx,got) {
   for (var x in got) {
     for (var y in got[x]) {
       var point = got[x][y];
@@ -133,7 +110,7 @@ function drawHud(ctx) {
 function draw() {
   var ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawWorld(ctx);
+  drawWorld(ctx,world.map);
   drawFauna(ctx);
   drawDebug(ctx);
   drawHud(ctx);
@@ -209,7 +186,6 @@ document.onkeydown = function(e) {
     }
 };
 
-world = generate(10,10);
-
 resize();
-draw();
+reloadWorld();
+getStuffNear(john.pos,drawdistance,got=>{world.map=got;draw();},error=>console.log(error));
