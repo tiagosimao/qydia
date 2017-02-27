@@ -1,10 +1,14 @@
 var canvas = document.getElementById("canvas");
 
+var refreshRateMillis = 100;
+
 var scale = 50;
 
-var drawdistance = 30;
+var drawdistance = 10;
 
 var world;
+
+var map;
 
 var john = {
   pos: [0,0]
@@ -14,7 +18,7 @@ var selection;
 
 function reloadWorld() {
   fetch("/api/world")
-  .then(function(response) { return response.json(); })
+  .then(r=>r.json())
   .then(got=>{
     world=got;
     reloadWorldMap();
@@ -24,10 +28,9 @@ function reloadWorld() {
 
 function reloadWorldMap() {
   fetch("/api/world?x="+john.pos[0]+"&y="+john.pos[1]+"&radius="+drawdistance)
-  .then(r=>response.json())
+  .then(r=>r.json())
   .then(got=>{
-    world.map=got;
-    draw();
+    map=got;
   })
   .catch(e=>console.log(e));
 }
@@ -68,10 +71,12 @@ function drawArea(ctx, ob, x, y, w, h) {
   ctx.fillRect(x, y, w, h);
 }
 
-function drawWorld(ctx,got) {
-  for (var x in got) {
-    for (var y in got[x]) {
-      var point = got[x][y];
+function drawWorld(ctx) {
+  for (var x in map) {
+    x = Number.parseInt(x);
+    for (var y in map[x]) {
+      y = Number.parseInt(y);
+      var point = map[x][y];
       var scoord = worldToScreen([x,y],john.pos);
       drawArea(ctx,point,scoord[0],scoord[1],scale,scale);
     }
@@ -108,12 +113,14 @@ function drawHud(ctx) {
 }
 
 function draw() {
+  //var start = Date.now();
   var ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  drawWorld(ctx,world.map);
+  drawWorld(ctx);
   drawFauna(ctx);
   drawDebug(ctx);
   drawHud(ctx);
+  //console.log("Draw took: " + (Date.now()-start));
 }
 
 function resize() {
@@ -132,7 +139,6 @@ function resize() {
       resizeTimeout = setTimeout(function() {
         resizeTimeout = null;
         resize();
-        draw();
      }, 100);
     }
   }
@@ -141,51 +147,46 @@ function resize() {
 
 canvas.addEventListener('click', function(e) {
   var lastclick = screenToWorld([e.offsetX,e.offsetY],john.pos);
-  if(selection&&selection[0]==lastclick[0]&&selection[1]==lastclick[1]){
+  if(selection && selection[0]==lastclick[0] && selection[1]==lastclick[1]) {
     selection=null;
   } else {
     selection=lastclick;
   }
-  draw();
-    }, false);
+}, false);
 
 document.onkeydown = function(e) {
   switch (e.keyCode) {
     case 37:
       moveX(john,-1);
-      draw();
       break;
     case 38:
       moveY(john,1);
-      draw();
       break;
     case 39:
       moveX(john,1);
-      draw();
       break;
     case 40:
       moveY(john,-1);
-      draw();
       break;
     case 73:
       scale++;
-      draw();
       break;
     case 75:
       scale--;
-      draw();
       break;
     case 79:
       drawdistance++
-      draw();
       break;
     case 76:
       drawdistance--;
-      draw();
       break;
     }
 };
 
+function queueDraw() {
+  setTimeout(function (){draw();queueDraw();},refreshRateMillis);
+}
+
 resize();
 reloadWorld();
-getStuffNear(john.pos,drawdistance,got=>{world.map=got;draw();},error=>console.log(error));
+queueDraw();

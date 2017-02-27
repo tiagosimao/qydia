@@ -2,20 +2,23 @@ var express = require('express');
 var meth = require('./static/meth');
 var app = express();
 
+var world;
+
 function getStuffNear(world,wcoord,radius){
   var x = wcoord[0];
   var y = wcoord[1];
-  var result = new Array();
-  for(var i=-radius;i<radius;++i){
-    for(var j=-radius;j<radius;++j){
-      console.log(world.width+":"+(x+i));
+  var result = new Map();
+  radius += (radius % 2 == 0) ? 1 : 0;
+  for(var i=-radius;i<=radius;++i) {
+    for(var j=-radius;j<=radius;++j) {
       var mx = meth.ringCoord(world.width,x+i);
       var my = meth.ringCoord(world.height,y+j);
-      if(!result[x+i]){
-        result[x+i] = new Array();
+      var xk = "" + (x + i);
+      var yk = "" + (y + j);
+      if(!result[xk]) {
+        result[xk] = new Map();
       }
-      console.log(mx+":"+my);
-      result[x+i][y+j]=world.map[mx][my];
+      result[xk][yk]=world.map[mx][my];
     }
   }
   return result;
@@ -49,7 +52,7 @@ function generate(w,h) {
   return world;
 }
 
-var world = generate(10,10);
+world = generate(10,10);
 
 app.use(express.static('static'))
 
@@ -58,7 +61,7 @@ app.get('/api/world/', function (req, res) {
   var y = req.query.y;
   var radius = req.query.radius;
   if(x && y && radius){
-    res.send(getStuffNear(world,[Number.parseInt(x),Number.parseInt(y)],radius));
+    res.send(getStuffNear(world,[Number.parseInt(x),Number.parseInt(y)],Number.parseInt(radius)));
   } else {
     res.send({
       width:world.width,
