@@ -1,0 +1,86 @@
+
+
+client<>server state transfer aka network
+
+a client can push intents to the server, an intent is an action request
+the server is responsible for transferring state changes to each client
+
+how is a new object pushed to the client? new area, new player, new action, ...
+how is an object change pushed to the client?
+how is an object removed from the client?
+how can the client handle interpolation between states?
+
+possible approach: represent the global app state with a serializable
+chain of actions and states
+
+initial state -> some action -> post-action state -> some other action
+
+premise: no actions can occur at the same "time"
+
+problem: keeping and transferring the whole state from the server to the clients
+is highly inefficient
+
+possible approach:
+- keep only the current state on the server
+- on each action, apply it and multi-cast it to relevant clients
+- each client is responsible for changing its own state
+- on client start/re-connect/refresh it will receive the relevant current state
+
+netcode
+
+ON START/REFRESH
+client                                    server
+login
+                                          store callback info (ie. websocket)
+                                          send relevant state (stuff around player)
+append state
+
+ON CLIENT ACTION
+client                                    server                                    client
+push to action history as pending
+send action
+                                          validate action
+                                          apply action
+                                          send action to relevant clients
+                                          append to history
+merge to state                                                                      merge to state
+mark as resolved in action history                                                  push to action history
+
+ON APPLY ACTION
+client                                    server
+                                          check if changes client scope (ie. move)
+                                          if so, send new relevant state
+append state
+
+CLIENT UI
+on each draw
+  use state
+  use action history for transients (mark as wasted on transient end)
+
+every now and then, clear wasted/old actions
+
+
+model
+
+state: {
+  me:
+  map:
+  fauna:
+}
+
+
+
+server modules:
+server
+world data
+api implementation
+data push
+
+client modules
+dom bootstrap
+settings
+api client
+human interface
+push listener
+drawage
+event bus

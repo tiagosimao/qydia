@@ -2,7 +2,7 @@
   "name": "qydia",
   "version": "1.0.0",
   "description": "",
-  "main": "server.js",
+  "main": "main.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -17,6 +17,8 @@
   },
   "homepage": "https://github.com/tiagosimao/qydia#readme",
   "dependencies": {
-    "express": "^4.14.1"
+    "express": "^4.14.1",
+    "body-parser": "1.17.2",
+    "websocket": "1.0.24"
   }
 }
