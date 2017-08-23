@@ -1,5 +1,6 @@
-const game = require('./game/logic.js')
-const netcode = require('./net/server.js')
+const netCode = require('./net/server.js');
+const gameLogic = require('./game/logic.js');
 
-game.createGame()
-.then(intentHandler=>netcode.boot(intentHandler))
+netCode.setup(gameLogic.handleIntent);
+gameLogic.setup(netCode.sendState);
+gameLogic.createGame();

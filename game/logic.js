@@ -1,51 +1,70 @@
 const worldGenerator = require('./world-generator.js');
-const netcode = require('../net/server.js')
+const uuidv4 = require('uuid/v4');
+const games = {};
+let stateDispatcher;
+
+module.exports.setup = dispatcher=>{
+  stateDispatcher = dispatcher;
+}
+
+module.exports.handleIntent = handle;
 
 module.exports.createGame = ()=>{
   return new Promise((ff,rj)=>{
     worldGenerator.generate().then(w=>{
-      world=w
-      ff(handler)
-    })
-  })
+      const game = spawnGame(w);
+      ff(game);
+    });
+  });
 }
 
-const players = {};
-let world = {};
+function spawnGame(world) {
+  const game = {
+    "id": uuidv4(),
+    "world": world,
+    "players": {}
+  };
+  games[game.id]=game;
+}
 
 function ringCoord(max,value) {
   return (max+value%max)%max;
 }
 
-function handler(intent,connection) {
+function handle(intent) {
+  if(!intent.gameId) {
+    intent.gameId = pickGameId();
+  }
   if(!intent.token) {
-    login(connection);
+    login(intent);
   }
 }
 
-function login(connection) {
-  const p = spawnPlayer(connection);
-  players[connection.id]=p;
-  unicastStateToPlayer(p);
-  multicastAction({
-    "action": "create",
-    "type": "entity",
-    "agent": p
-  });
+function pickGameId() {
+  const ks = Object.keys(games);
+  return ks[Math.floor(ks.length * Math.random())];
 }
 
-function spawnPlayer(connection) {
+function login(intent) {
+  const players = games[intent.gameId].players;
+  const world = games[intent.gameId].world;
+  const p = spawnPlayer(intent);
+  players[p.id]=p;
+  unicastStateToPlayer(world,p);
+}
+
+function spawnPlayer(intent) {
   return {
     "type": "entity",
-    "id": connection.id,
+    "id": uuidv4(),
     "x": 0,
     "y": 0,
     "vision": 3,
-    "connectionId": connection.id
+    "connectionId": intent.connectionId
   }
 }
 
-function getRelevantState(whom) {
+function getRelevantState(world,whom) {
   return {
     "world": {
       "width":world.width,
@@ -57,7 +76,7 @@ function getRelevantState(whom) {
 }
 
 function getStuffNear(world,x,y,radius) {
-  let result = {};
+  const result = {};
   for(let i=-radius;i<=radius;++i) {
     for(let j=-radius;j<=radius;++j) {
       let mx = ringCoord(world.width,x+i);
@@ -74,10 +93,7 @@ function getStuffNear(world,x,y,radius) {
   return result;
 }
 
-function unicastStateToPlayer(player) {
-  const state = getRelevantState(player)
-  netcode.sendToPlayer(player, state)
-}
-
-function multicastAction(action) {
+function unicastStateToPlayer(world,player) {
+  const state = getRelevantState(world,player);
+  stateDispatcher([player],state);
 }

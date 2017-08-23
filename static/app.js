@@ -10,12 +10,12 @@ const context = {
   }
 }
 
-function mergeWorld(got){
+function mergeWorld(got) {
   context.world=got;
 }
 
-function mergeMap(got){
-  if(!context.map){
+function mergeMap(got) {
+  if(!context.map) {
     context.map=got;
   } else {
     for (let x in got) {
@@ -30,7 +30,7 @@ function mergeMap(got){
   }
 }
 
-function mergeMe(got){
+function mergeMe(got) {
   if(!context.john){
     context.john=got;
   } else {
@@ -47,12 +47,12 @@ function loadSettings() {
 }
 
 function saveSettings() {
-  if(context.settings){
+  if(context.settings) {
     localStorage.setItem("settings",JSON.stringify(settings));
   }
 }
 
-function stayawhileandlisten(){
+function stayawhileandlisten() {
   let connection = new WebSocket('ws://localhost:8080/client',['qydia']);
   connection.onopen = function () {
     console.log("Connected to server");
