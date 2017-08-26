@@ -32,11 +32,12 @@ function ringCoord(max,value) {
 }
 
 function handle(intent) {
-  if(!intent.gameId) {
+  const game = games[intent.gameId];
+  if(!game) {
     intent.gameId = pickGameId();
-  }
-  if(!intent.token) {
     login(intent);
+  } else if("move"==intent.action) {
+    move(game, intent);
   }
 }
 
@@ -50,7 +51,15 @@ function login(intent) {
   const world = games[intent.gameId].world;
   const p = spawnPlayer(intent);
   players[p.id]=p;
-  unicastStateToPlayer(world,p);
+  unicastStateToPlayer(intent.gameId, world, p);
+}
+
+function move(game, intent){
+  const player = game.players[intent.myId];
+  if(player){
+    player.y = ringCoord(game.world.height,player.y+1);
+    unicastStateToPlayer(game.id, game.world, player);
+  }
 }
 
 function spawnPlayer(intent) {
@@ -59,13 +68,14 @@ function spawnPlayer(intent) {
     "id": uuidv4(),
     "x": 0,
     "y": 0,
-    "vision": 3,
+    "vision": 1,
     "connectionId": intent.connectionId
   }
 }
 
-function getRelevantState(world,whom) {
+function getRelevantState(gameId,world,whom) {
   return {
+    "gameId": gameId,
     "world": {
       "width":world.width,
       "height":world.height
@@ -93,7 +103,7 @@ function getStuffNear(world,x,y,radius) {
   return result;
 }
 
-function unicastStateToPlayer(world,player) {
-  const state = getRelevantState(world,player);
+function unicastStateToPlayer(gameId, world, player) {
+  const state = getRelevantState(gameId,world,player);
   stateDispatcher([player],state);
 }

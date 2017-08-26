@@ -24,7 +24,7 @@ possible approach:
 - keep only the current state on the server
 - on each action, apply it and multi-cast it to relevant clients
 - each client is responsible for changing its own state
-- on client start/re-connect/refresh it will receive the relevant current state
+- on client start/re-connect/refresh it will receive the total relevant current state
 
 netcode
 
@@ -58,29 +58,3 @@ on each draw
   use action history for transients (mark as wasted on transient end)
 
 every now and then, clear wasted/old actions
-
-
-model
-
-state: {
-  me:
-  map:
-  fauna:
-}
-
-
-
-server modules:
-server
-world data
-api implementation
-data push
-
-client modules
-dom bootstrap
-settings
-api client
-human interface
-push listener
-drawage
-event bus

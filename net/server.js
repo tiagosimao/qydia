@@ -46,9 +46,14 @@ function bootGameServer(port, intentDispatcher) {
       delete connections[connection.id];
     });
     connection.on('message', function(message) {
-      const got = JSON.parse(message.utf8Data);
-      got.connectionId=connection.id;
-      intentDispatcher(got);
+      try{
+        const got = JSON.parse(message.utf8Data);
+        got.connectionId=connection.id;
+        intentDispatcher(got);
+      } catch(err){
+        console.error("Error handling message: " + err);
+        console.error(err.stack);
+      }
     });
   });
   server.listen(8080, function() {

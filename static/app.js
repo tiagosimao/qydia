@@ -1,90 +1,24 @@
+import * as data from './data.js';
+import * as client from './client.js';
 import * as ui from './ui.js';
+import * as input from './input.js';
 
-const context = {
-  "selection": undefined,
-  "settings": undefined,
-  "world": undefined,
-  "map": undefined,
-  "john": {
-    pos: [0,0]
-  }
+function handleMessage(resp){
+  data.merge(resp);
 }
 
-function mergeWorld(got) {
-  context.world=got;
-}
+(function init() {
 
-function mergeMap(got) {
-  if(!context.map) {
-    context.map=got;
-  } else {
-    for (let x in got) {
-      for (let y in got[x]) {
-        if(!context.map[x]){
-          context.map[x]=got[x];
-        } else {
-          context.map[x][y]=got[x][y];
-        }
-      }
-    }
-  }
-}
+  data.init();
 
-function mergeMe(got) {
-  if(!context.john){
-    context.john=got;
-  } else {
-    context.john.name=got.name;
-    context.john.pos=[got.x,got.y];
-  }
-}
+  client.init(data.get().settings, handleMessage).then(ok=>{
+    client.request({"action": "login"});
+  }, err=>{
+    console.log("Error connecting to server: " + err);
+  });
 
-function loadSettings() {
-  let got = localStorage.getItem("settings");
-  if(got){
-    context.settings = JSON.parse(got);
-  }
-}
+  ui.init(data.get());
 
-function saveSettings() {
-  if(context.settings) {
-    localStorage.setItem("settings",JSON.stringify(settings));
-  }
-}
+  input.init(data.get(),client);
 
-function stayawhileandlisten() {
-  let connection = new WebSocket('ws://localhost:8080/client',['qydia']);
-  connection.onopen = function () {
-    console.log("Connected to server");
-    connection.send(JSON.stringify({
-      "action": "login"
-    }));
-  };
-  // Log errors
-  connection.onerror = function (error) {
-    console.log('WebSocket Error ' + error);
-  };
-
-  connection.onmessage = function (e) {
-    console.log("Got package from server")
-    const resp = JSON.parse(e.data);
-    mergeWorld(resp.world);
-    mergeMap(resp.map);
-    mergeMe(resp.me);
-  };
-}
-
-function init() {
-  loadSettings();
-  if(!context.settings) {
-    context.settings = {
-      scale: 50,
-      drawdistance: 2
-    }
-    saveSettings();
-  }
-  stayawhileandlisten();
-  ui.init(context);
-}
-
-init();
+})();
