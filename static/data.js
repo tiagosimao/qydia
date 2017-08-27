@@ -1,5 +1,5 @@
 const data = {
-  "selection": undefined,
+  "selection": {},
   "settings": undefined,
   "world": undefined,
   "map": undefined,

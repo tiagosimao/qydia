@@ -56,8 +56,10 @@ function login(intent) {
 
 function move(game, intent){
   const player = game.players[intent.myId];
-  if(player){
-    player.y = ringCoord(game.world.height,player.y+1);
+  const target = intent.target;
+  if(player && target){
+    player.x = ringCoord(game.world.width,target[0]);
+    player.y = ringCoord(game.world.height,target[1]);
     unicastStateToPlayer(game.id, game.world, player);
   }
 }
