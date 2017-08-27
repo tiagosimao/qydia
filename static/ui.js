@@ -144,7 +144,7 @@ function resize() {
 canvas.addEventListener('click', function(e) {
   let lastclick = screenToWorld(e.offsetX,e.offsetY,data.me.x,data.me.y,data.settings.scale);
   clickHandler({
-    target: [lastclick]
+    target: lastclick
   });
 }, false);
 

@@ -6,7 +6,7 @@ export function init(gameData, gameClient){
   setupKeyboard();
 }
 
-export function click(event){
+export function clickHandler(event){
   move(event.target);
 }
 
@@ -48,11 +48,11 @@ function decDrawDistance() {
   data.settings.drawdistance--;
 }
 
-function move(toX,toY) {
+function move(target) {
   client.request({
     "action":"move",
     "gameId":data.gameId,
     "myId":data.me.id,
-    "target": [toX,toY]
+    "target": target
   });
 }
