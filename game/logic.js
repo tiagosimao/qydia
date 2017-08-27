@@ -1,5 +1,6 @@
 const worldGenerator = require('./world-generator.js');
 const uuidv4 = require('uuid/v4');
+
 const games = {};
 let stateDispatcher;
 
@@ -31,6 +32,23 @@ function ringCoord(max,value) {
   return (max+value%max)%max;
 }
 
+function distance(modX, modY, fromX, fromY, toX, toY) {
+  //check boundaries
+  if(fromX>=modX||fromX<0||fromY>=modY||fromY<0||toX>=modX||toX<0||toY>=modY||toY<0){
+    return Infinity;
+  }
+
+  const fromXToOrigin = Math.min(fromX,modX-fromX);
+  const toXToOrigin = Math.min(toX,modX-toX);
+  const distanceX = Math.min(Math.abs(fromX-toX),fromXToOrigin+toXToOrigin);
+
+  const fromYToOrigin = Math.min(fromY,modY-fromY);
+  const toYToOrigin = Math.min(toY,modY-toY);
+  const distanceY = Math.min(Math.abs(fromY-toY),fromYToOrigin+toYToOrigin);
+
+  return Math.max(distanceX,distanceY);
+}
+
 function handle(intent) {
   const game = games[intent.gameId];
   if(!game) {
@@ -56,11 +74,20 @@ function login(intent) {
 
 function move(game, intent){
   const player = game.players[intent.myId];
-  const target = intent.target;
-  if(player && target){
-    player.x = ringCoord(game.world.width,target[0]);
-    player.y = ringCoord(game.world.height,target[1]);
+  if(isValidMove(game,player,intent)){
+    player.x = intent.target[0];
+    player.y = intent.target[1];
     unicastStateToPlayer(game.id, game.world, player);
+  }
+}
+
+function isValidMove(game, player, intent){
+  const target = intent.target;
+  if(game && player && target){
+    const dist = distance(game.world.width, game.world.height, player.x, player.y, target[0], target[1]);
+    if(dist<2){
+      return true;
+    }
   }
 }
 
