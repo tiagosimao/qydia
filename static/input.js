@@ -6,15 +6,16 @@ export function init(gameData, gameClient){
   setupKeyboard();
 }
 
+export function click(event){
+  move(event.target);
+}
+
 let data;
 let client;
 
 function setupKeyboard() {
   document.onkeydown = function(e) {
     switch (e.keyCode) {
-      case 13: // enter
-        move();
-        break;
       case 73: // i
         zoomIn();
         break;
@@ -47,11 +48,11 @@ function decDrawDistance() {
   data.settings.drawdistance--;
 }
 
-function move() {
+function move(toX,toY) {
   client.request({
     "action":"move",
     "gameId":data.gameId,
     "myId":data.me.id,
-    "target": [data.selection.x,data.selection.y]
+    "target": [toX,toY]
   });
 }

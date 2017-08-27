@@ -17,8 +17,7 @@ function handleMessage(resp){
     console.log("Error connecting to server: " + err);
   });
 
-  ui.init(data.get());
-
   input.init(data.get(),client);
+  ui.init(data.get(), input.clickHandler);
 
 })();

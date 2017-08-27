@@ -1,12 +1,15 @@
 import {ringCoord} from './math.js';
 
-export function init(gameData){
+export function init(gameData, onClickHandler){
   data=gameData;
+  clickHandler=onClickHandler;
   resize();
   queueDraw();
 }
 
 let data;
+
+let clickHandler;
 
 let canvas = document.getElementById("canvas");
 
@@ -88,7 +91,6 @@ function drawDebug(twoDContext,scale) {
   twoDContext.fillText("Scale: " + data.settings.scale, 10, 20);
   twoDContext.fillText("Draw Distance: " + data.settings.drawdistance , 10, 40);
   twoDContext.fillText("World Position: " + data.me.x + "," + data.me.y, 10, 60);
-  twoDContext.fillText("Selection: " + data.selection.x + ", " + data.selection.y , 10, 80);
 }
 
 function drawFauna(twoDContext,scale) {
@@ -103,12 +105,6 @@ function drawFauna(twoDContext,scale) {
 }
 
 function drawHud(twoDContext,scale) {
-  if(data.selection.x){
-    let scoord = worldToScreen(data.selection.x,data.selection.y,data.me.x,data.me.y,scale);
-    twoDContext.strokeStyle = "rgb(255,255,255)";
-    twoDContext.lineWidth = 2;
-    twoDContext.strokeRect(scoord[0]+2, scoord[1]+2, scale-2, scale-2);
-  }
 }
 
 function draw() {
@@ -147,15 +143,9 @@ function resize() {
 
 canvas.addEventListener('click', function(e) {
   let lastclick = screenToWorld(e.offsetX,e.offsetY,data.me.x,data.me.y,data.settings.scale);
-  console.log(lastclick)
-  if(data.selection.x==lastclick[0] && data.selection.y==lastclick[1]) {
-    data.selection={};
-  } else {
-    data.selection={
-      x:lastclick[0],
-      y:lastclick[1]
-    };
-  }
+  clickHandler({
+    target: [lastclick]
+  });
 }, false);
 
 function queueDraw() {
