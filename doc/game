@@ -1,0 +1,19 @@
+
+MVP
+available over the internet on someaddress.tld
+
+:app_init
+    ?exists previous session
+        y: goto player_login
+        n: goto player_create
+    render
+:player_login
+    network login/listen
+:player_create
+    request name
+    goto player_login
+:on_network_event
+    model_update
+:on_player_action
+    network action
+:render

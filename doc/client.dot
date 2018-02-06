@@ -1,0 +1,24 @@
+digraph client_app {
+    node[shape=circle]
+    boot[label="Boot"]
+    render[label="Render"]
+    login[label="Login"]
+    register[label="Register"]
+    listen[label="Network Listen"]
+    call[label="Network Call"]
+    update[label="Update Model"]
+    action[label="User Action"]
+    exists_session[label="?Session" shape=triangle]
+
+    boot -> exists_session
+    exists_session -> login [label="Y"]
+    exists_session -> register [label="N"]
+    register -> login
+    login -> call
+    listen -> update
+    render -> render
+    boot -> render
+    action -> update
+    action -> call
+    update -> render
+}
